@@ -19,10 +19,7 @@ type Repository struct {
 // Create a new repository
 func CreateRepository(path string, force bool) (*Repository, error) {
 	gitfilepath := filepath.Join(path, utils.GIT_DIR_NAME)
-	isdir, err := utils.IsDir(gitfilepath)
-	if err != nil {
-		return nil, err
-	}
+	isdir, _ := utils.IsDir(gitfilepath)
 	if !(force || isdir) {
 		return nil, &ShitException{Message: fmt.Sprintf("Not a git repository %s", path)}
 	}
@@ -31,15 +28,8 @@ func CreateRepository(path string, force bool) (*Repository, error) {
 		GitDir:   gitfilepath,
 	}
 
-	pathtoconfig, err := repository.RepoFile(false, utils.CONFIG_FILE_NAME)
-	if err != nil {
-		return nil, err
-	}
-
-	exists, err := utils.PathExists(pathtoconfig)
-	if err != nil {
-		return nil, err
-	}
+	pathtoconfig, _ := repository.RepoFile(false, utils.CONFIG_FILE_NAME)
+	exists, _ := utils.PathExists(pathtoconfig)
 	if exists && pathtoconfig != "" {
 		// Load the configuration file
 		cfg, err := ini.Load(pathtoconfig)
