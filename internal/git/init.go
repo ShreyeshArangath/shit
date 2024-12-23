@@ -18,49 +18,49 @@ var log = logrus.New()
 // .git/HEAD, a reference to the current HEAD (more on that later!)
 // .git/config, the repository’s configuration file.
 // .git/description, holds a free-form description of this repository’s contents, for humans, and is rarely used.
-func Init(path string) {
+func Init(path string) (bool, error) {
 	// Create the new shit repository
 	repo, err := models.CreateRepository(path, true)
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 
 	// Ensure the worktree path exists and is a directory
 	workTreeExists, err := utils.IsDir(repo.Worktree)
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 
 	if workTreeExists {
 		workTreeIsDir, err := utils.IsDir(repo.Worktree)
 		if err != nil {
-			panic(err)
+			return false, err
 		}
 		if !workTreeIsDir {
 			err = &models.ShitException{Message: fmt.Sprintf("Path %s is not a directory", repo.Worktree)}
-			panic(err)
+			return false, err
 		}
 
 		gitDirExists, err := utils.PathExists(repo.GitDir)
 		if err != nil {
-			panic(err)
+			return false, err
 		}
 		if gitDirExists {
 			// Ensure the gitdir is empty
 			gitDirIsEmpty, err := utils.IsDirEmpty(repo.GitDir)
 			if err != nil {
-				panic(err)
+				return false, err
 			}
 			if !gitDirIsEmpty {
 				err = &models.ShitException{Message: fmt.Sprintf("Git directory %s is not empty", repo.GitDir)}
-				panic(err)
+				return false, err
 			}
 		}
 	} else {
 		log.Println("Creating shit directory at ", repo.Worktree)
 		err = os.MkdirAll(repo.Worktree, 0755)
 		if err != nil {
-			panic(err)
+			return false, err
 		}
 	}
 
@@ -77,7 +77,7 @@ func Init(path string) {
 		err = os.MkdirAll(dirPath, 0755)
 		log.Debugf("Creating directory %s", dir)
 		if err != nil {
-			panic(err)
+			return false, err
 		}
 	}
 
@@ -104,13 +104,14 @@ func Init(path string) {
 	err = ini.ReflectFrom(cfg, config)
 	if err != nil {
 		err = &models.ShitException{Message: fmt.Sprintf("Failed to create config file: %v", err)}
-		panic(err)
+		return false, err
 	}
 	configFilePath := filepath.Join(repo.GitDir, "config")
 	err = cfg.SaveTo(configFilePath)
 	if err != nil {
 		err := &models.ShitException{Message: fmt.Sprintf("Failed to save config file: %v", err)}
-		panic(err)
+		return false, err
 	}
 	log.Debugf("Config file saved to %s", configFilePath)
+	return true, nil
 }
