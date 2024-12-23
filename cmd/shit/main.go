@@ -3,8 +3,12 @@ package main
 import (
 	"fmt"
 
+	"github.com/ShreyeshArangath/shit/internal/git"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
+
+var log = logrus.New()
 
 var rootCmd = &cobra.Command{
 	Use:   "shit",
@@ -19,11 +23,18 @@ var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialize a new repository",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Initialized an empty repository.")
+		path, _ := cmd.Flags().GetString("path")
+		git.Init(path)
 	},
 }
 
 func main() {
+	if err := rootCmd.Execute(); err != nil {
+		log.Println(err)
+	}
+}
+
+func init() {
 	rootCmd.AddCommand(initCmd)
-	rootCmd.Execute()
+	initCmd.Flags().StringP("path", "p", ".", "Where to create the repository.")
 }
