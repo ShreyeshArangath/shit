@@ -35,7 +35,6 @@ func main() {
 }
 
 func init() {
-	// Add the 'path' flag to the 'init' command
 	rootCmd.AddCommand(initCmd)
 	initCmd.Flags().StringP("path", "p", ".", "Where to create the repository.")
 }
