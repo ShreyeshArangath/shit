@@ -18,31 +18,111 @@ type Repository struct {
 
 // Create a new repository
 func CreateRepository(path string, force bool) (*Repository, error) {
-	// Check if the path is valid
-
-	// Check if the path has a .git subdir (if not, throw an exception )
 	gitfilepath := filepath.Join(path, utils.GIT_DIR_NAME)
-	info, err := os.Stat(path)
+	isdir, err := utils.IsDir(gitfilepath)
 	if err != nil {
 		return nil, err
 	}
-	if !(force || info.IsDir()) {
+	if !(force || isdir) {
 		return nil, &ShitException{Message: fmt.Sprintf("Not a git repository %s", path)}
 	}
-	// Read the .git config file
-	cfg, err := ini.Load(utils.CONFIG_FILE_NAME)
+	repository := &Repository{
+		Worktree: path,
+		GitDir:   gitfilepath,
+	}
+
+	pathtoconfig, err := repository.RepoFile(false, utils.CONFIG_FILE_NAME)
 	if err != nil {
 		return nil, err
 	}
-	return &Repository{
-		Worktree: path,
-		GitDir:   gitfilepath,
-		Conf:     cfg,
-	}, nil
+
+	exists, err := utils.PathExists(pathtoconfig)
+	if err != nil {
+		return nil, err
+	}
+	if exists && pathtoconfig != "" {
+		// Load the configuration file
+		cfg, err := ini.Load(pathtoconfig)
+		if err != nil {
+			return nil, err
+		}
+		repository.Conf = cfg
+	} else if !force {
+		return nil, &ShitException{Message: fmt.Sprintf("Config file does not exist %s", pathtoconfig)}
+	}
+
+	if !force {
+		version := repository.Conf.Section("core").Key("repositoryformatversion").String()
+		if version != "0" {
+			return nil, &ShitException{Message: fmt.Sprintf("Unsupported repositoryformatversion %s", version)}
+		}
+	}
+	return repository, nil
 }
 
 // Get the path under the .git directory
-func (r *Repository) GetRepoPath(paths ...string) string {
-	pathwithgitdir := append([]string{r.GitDir}, paths...)
+func (r *Repository) GetRepoPath(path ...string) string {
+	pathwithgitdir := append([]string{r.GitDir}, path...)
 	return filepath.Join(pathwithgitdir...)
+}
+
+// RepoDir returns the directory path for the repository, creating it if necessary.
+// If the directory already exists, it verifies that the path is indeed a directory.
+// If the directory does not exist and mkdir is true, it creates the directory with
+// the specified path. If mkdir is false, it returns an error indicating that the
+// path does not exist.
+//
+// Parameters:
+//
+//	mkdir - a boolean indicating whether to create the directory if it does not exist
+//	path  - variadic string arguments representing the path components to the directory
+//
+// Returns:
+//
+//	string - the path to the repository directory
+//	error  - an error if the path is not a directory, does not exist, or if there
+//	         was an issue creating the directory
+func (r *Repository) RepoDir(mkdir bool, path ...string) (string, error) {
+	pathtodir := r.GetRepoPath(path...)
+	exists, err := utils.PathExists(pathtodir)
+	if err != nil {
+		return "", err
+	}
+	if exists {
+		isdir, err := utils.IsDir(pathtodir)
+		if err != nil {
+			return "", err
+		}
+		if isdir {
+			return pathtodir, nil
+		}
+		return "", &ShitException{Message: fmt.Sprintf("Not a directory %s", pathtodir)}
+	}
+
+	if mkdir {
+		if err := os.MkdirAll(pathtodir, 0755); err != nil {
+			return "", err
+		}
+		return pathtodir, nil
+	}
+	return "", &ShitException{Message: fmt.Sprintf("Path does not exist %s", pathtodir)}
+}
+
+// RepoFile creates the repository directory if `mkdir` is true and returns the
+// full path to the repository file specified by the `path` arguments.
+// It returns an error if the directory creation or path retrieval fails.
+//
+// Parameters:
+// - mkdir: A boolean indicating whether to create the directory if it does not exist.
+// - path: A variadic string slice representing the path components of the repository file.
+//
+// Returns:
+// - A string representing the full path to the repository file.
+// - An error if the directory creation or path retrieval fails.
+func (r *Repository) RepoFile(mkdir bool, path ...string) (string, error) {
+	_, err := r.RepoDir(mkdir, path[:len(path)-1]...)
+	if err != nil {
+		return "", err
+	}
+	return r.GetRepoPath(path...), nil
 }

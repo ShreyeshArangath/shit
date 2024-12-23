@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/ShreyeshArangath/shit/internal/git"
 	"github.com/spf13/cobra"
 )
 
@@ -26,4 +27,5 @@ var initCmd = &cobra.Command{
 func main() {
 	rootCmd.AddCommand(initCmd)
 	rootCmd.Execute()
+	git.Init()
 }
