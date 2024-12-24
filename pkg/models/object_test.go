@@ -206,6 +206,52 @@ func TestObjectWriteHappyPath(t *testing.T) {
 	assert.Equal(t, expectedContents, decompressedData.Bytes())
 }
 
+func TestObjectHashValid(t *testing.T) {
+	_, gitDir, repo := setupObjectTest(t)
+
+	// Create a temporary file with test data
+	tempFile := filepath.Join(gitDir, "testfile")
+	data := []byte("test data")
+	err := os.WriteFile(tempFile, data, 0644)
+	assert.NoError(t, err)
+
+	// Call ObjectHash with the temporary file
+	sha, err := ObjectHash(repo, "blob", tempFile)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, sha)
+
+	// Verify the object was written to the correct path
+	objectPath := filepath.Join(gitDir, "objects", sha[:2], sha[2:])
+	objectPathExists, err := utils.PathExists(objectPath)
+	assert.NoError(t, err)
+	assert.True(t, objectPathExists)
+
+	// Verify the contents of the written object
+	compressedData, err := os.ReadFile(objectPath)
+	assert.NoError(t, err)
+
+	decompressedData, err := zlibDecompress(compressedData)
+	assert.NoError(t, err)
+
+	expectedHeader := fmt.Sprintf("blob %d\x00", len(data))
+	expectedContents := append([]byte(expectedHeader), data...)
+	assert.Equal(t, expectedContents, decompressedData.Bytes())
+}
+
+func TestObjectHashInvalidObjectType(t *testing.T) {
+	_, gitDir, repo := setupObjectTest(t)
+
+	// Create a temporary file with test data
+	tempFile := filepath.Join(gitDir, "testfile")
+	data := []byte("test data")
+	err := os.WriteFile(tempFile, data, 0644)
+	assert.NoError(t, err)
+
+	// Call ObjectHash with an invalid object type
+	_, err = ObjectHash(repo, "invalidtype", tempFile)
+	assert.Error(t, err)
+}
+
 // TODO: Update this test case to use the actual implementation of the blob object
 type FakeObject struct {
 	Type string
