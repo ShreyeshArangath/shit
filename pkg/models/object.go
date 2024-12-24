@@ -91,7 +91,7 @@ func ObjectWrite(object Object, repo Repository) (string, error) {
 	}
 
 	// Add the header
-	header := fmt.Sprintf("%s %s\x00", object.GetType(), []byte(strconv.Itoa(len(data))))
+	header := fmt.Sprintf("%s %s\x00", object.GetType(), strconv.Itoa(len(data)))
 	// Add the contents of the object to the header
 	contents := append([]byte(header), data...)
 	// Compute the hash
