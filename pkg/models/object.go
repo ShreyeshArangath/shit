@@ -79,8 +79,8 @@ func ObjectRead(repo *Repository, sha string) (Object, error) {
 	return ObjectFactory(objectType, []byte(objectData))
 }
 
-func ObjectWrite(object Object, repo Repository) (string, error) {
-	data, err := object.Serialize(&repo)
+func ObjectWrite(object Object, repo *Repository) (string, error) {
+	data, err := object.Serialize(repo)
 	if err != nil {
 		return "", err
 	}
@@ -119,6 +119,15 @@ func ObjectWrite(object Object, repo Repository) (string, error) {
 
 func ObjectFind(repo *Repository, name string, objecttype string, follow bool) (string, error) {
 	return name, nil
+}
+
+func ObjectHash(repo *Repository, objectype string, path string) (string, error) {
+	data, err := readBinaryFile(path)
+	object, err := ObjectFactory(objectype, data)
+	if err != nil {
+		return "", err
+	}
+	return ObjectWrite(object, repo)
 }
 
 func readBinaryFile(path string) ([]byte, error) {

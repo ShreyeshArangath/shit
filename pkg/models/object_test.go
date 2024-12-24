@@ -184,7 +184,7 @@ func TestObjectWriteHappyPath(t *testing.T) {
 		Data: []byte("test data"),
 	}
 
-	sha, err := ObjectWrite(fakeObject, *repo)
+	sha, err := ObjectWrite(fakeObject, repo)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, sha)
 
