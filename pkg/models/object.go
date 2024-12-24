@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"compress/zlib"
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"strconv"
@@ -16,9 +18,10 @@ import (
 var log = logrus.New()
 
 type Object interface {
-	initialize()
-	serialize(repo *Repository) []byte
-	deserialize(data []byte)
+	GetType() string
+	Initialize()
+	Serialize(repo *Repository) ([]byte, error)
+	Deserialize(data []byte) error
 }
 
 func ObjectFactory(objectType string, data []byte) (*Object, error) {
@@ -48,13 +51,13 @@ func ObjectRead(repo *Repository, sha string) (*Object, error) {
 		return nil, nil
 	}
 
-	data, err := ReadBinaryFile(path)
+	data, err := readBinaryFile(path)
 	if err != nil {
 		return nil, err
 	}
 
 	var decompressedData bytes.Buffer
-	decompressedData, err = ZlibDecompress(data)
+	decompressedData, err = zlibDecompress(data)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +84,45 @@ func ObjectRead(repo *Repository, sha string) (*Object, error) {
 	return ObjectFactory(objectType, []byte(objectData))
 }
 
-func ReadBinaryFile(path string) ([]byte, error) {
+func ObjectWrite(object Object, repo Repository) (string, error) {
+	data, err := object.Serialize(&repo)
+	if err != nil {
+		return "", err
+	}
+
+	// Add the header
+	header := fmt.Sprintf("%s %s\x00", object.GetType(), []byte(strconv.Itoa(len(data))))
+	// Add the contents of the object to the header
+	contents := append([]byte(header), data...)
+	// Compute the hash
+	sha1 := sha1.New()
+	sha1.Write(contents)
+	sha := hex.EncodeToString(sha1.Sum(nil))
+	objectPath, err := repo.RepoFile(true, "objects", sha[:2], sha[2:])
+	if err != nil {
+		return "", err
+	}
+
+	objectPathExists, err := utils.PathExists(objectPath)
+	if err != nil {
+		return "", err
+	}
+
+	if !objectPathExists {
+		// Write the object to the store
+		compressedData, err := zlibCompress(contents)
+		if err != nil {
+			return "", err
+		}
+		err = writeBinaryFile(objectPath, compressedData)
+		if err != nil {
+			return "", err
+		}
+	}
+	return sha, nil
+}
+
+func readBinaryFile(path string) ([]byte, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -103,8 +144,26 @@ func ReadBinaryFile(path string) ([]byte, error) {
 	return buffer, nil
 }
 
+func writeBinaryFile(path string, data []byte) error {
+	file, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	writer := bufio.NewWriter(file)
+	_, err = writer.Write(data)
+	if err != nil {
+		return err
+	}
+	err = writer.Flush()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // Decompresses the object data using zlib and returns the decompressed data.
-func ZlibDecompress(data []byte) (bytes.Buffer, error) {
+func zlibDecompress(data []byte) (bytes.Buffer, error) {
 	reader, err := zlib.NewReader(bytes.NewReader(data))
 	if err != nil {
 		return bytes.Buffer{}, err
@@ -117,4 +176,19 @@ func ZlibDecompress(data []byte) (bytes.Buffer, error) {
 		return bytes.Buffer{}, err
 	}
 	return out, nil
+}
+
+// zlibCompress compresses the given data using zlib.
+func zlibCompress(data []byte) ([]byte, error) {
+	var buffer bytes.Buffer
+	writer := zlib.NewWriter(&buffer)
+	_, err := writer.Write(data)
+	if err != nil {
+		return nil, err
+	}
+	err = writer.Close()
+	if err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
 }

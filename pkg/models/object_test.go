@@ -3,6 +3,7 @@ package models
 import (
 	"bytes"
 	"compress/zlib"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -102,14 +103,14 @@ func TestReadBinaryFileExists(t *testing.T) {
 	err := os.WriteFile(filePath, []byte("test data"), 0644)
 	assert.NoError(t, err)
 
-	data, err := ReadBinaryFile(filePath)
+	data, err := readBinaryFile(filePath)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("test data"), data)
 }
 
 func TestReadBinaryFileNotExists(t *testing.T) {
 	tempDir := t.TempDir()
-	_, err := ReadBinaryFile(filepath.Join(tempDir, "nonexistent"))
+	_, err := readBinaryFile(filepath.Join(tempDir, "nonexistent"))
 	assert.Error(t, err)
 }
 
@@ -121,12 +122,107 @@ func TestZlibDecompressValidData(t *testing.T) {
 	assert.NoError(t, err)
 	writer.Close()
 
-	decompressedData, err := ZlibDecompress(compressedData.Bytes())
+	decompressedData, err := zlibDecompress(compressedData.Bytes())
 	assert.NoError(t, err)
 	assert.Equal(t, data, decompressedData.Bytes())
 }
 
 func TestZlibDecompressInvalidData(t *testing.T) {
-	_, err := ZlibDecompress([]byte("invalid data"))
+	_, err := zlibDecompress([]byte("invalid data"))
 	assert.Error(t, err)
 }
+
+func TestZlibCompressValidData(t *testing.T) {
+	data := []byte("test data")
+	compressedData, err := zlibCompress(data)
+	assert.NoError(t, err)
+
+	// Decompress to verify
+	decompressedData, err := zlibDecompress(compressedData)
+	assert.NoError(t, err)
+	assert.Equal(t, data, decompressedData.Bytes())
+}
+
+func TestZlibCompressEmptyData(t *testing.T) {
+	data := []byte("")
+	compressedData, err := zlibCompress(data)
+	assert.NoError(t, err)
+
+	// Decompress to verify
+	decompressedData, err := zlibDecompress(compressedData)
+	assert.NoError(t, err)
+	assert.Equal(t, data, decompressedData.Bytes())
+}
+
+func TestWriteBinaryFileValid(t *testing.T) {
+	tempDir := t.TempDir()
+	filePath := filepath.Join(tempDir, "testfile")
+	data := []byte("test data")
+
+	err := writeBinaryFile(filePath, data)
+	assert.NoError(t, err)
+
+	readData, err := os.ReadFile(filePath)
+	assert.NoError(t, err)
+	assert.Equal(t, data, readData)
+}
+
+func TestWriteBinaryFileInvalidPath(t *testing.T) {
+	invalidPath := "/invalid/path/testfile"
+	data := []byte("test data")
+
+	err := writeBinaryFile(invalidPath, data)
+	assert.Error(t, err)
+}
+
+func TestObjectWriteHappyPath(t *testing.T) {
+	_, gitDir, repo := setupObjectTest(t)
+
+	// Create a fake object
+	fakeObject := &FakeObject{
+		Type: "blob",
+		Data: []byte("test data"),
+	}
+
+	sha, err := ObjectWrite(fakeObject, *repo)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, sha)
+
+	// Verify the object was written to the correct path
+	objectPath := filepath.Join(gitDir, "objects", sha[:2], sha[2:])
+	objectPathExists, err := utils.PathExists(objectPath)
+	assert.NoError(t, err)
+	assert.True(t, objectPathExists)
+
+	// Verify the contents of the written object
+	compressedData, err := os.ReadFile(objectPath)
+	assert.NoError(t, err)
+
+	decompressedData, err := zlibDecompress(compressedData)
+	assert.NoError(t, err)
+
+	expectedHeader := fmt.Sprintf("blob %d\x00", len(fakeObject.Data))
+	expectedContents := append([]byte(expectedHeader), fakeObject.Data...)
+	assert.Equal(t, expectedContents, decompressedData.Bytes())
+}
+
+// TODO: Update this test case to use the actual implementation of the blob object
+type FakeObject struct {
+	Type string
+	Data []byte
+}
+
+func (o *FakeObject) Serialize(repo *Repository) ([]byte, error) {
+	return o.Data, nil
+}
+
+func (o *FakeObject) Deserialize(data []byte) error {
+	o.Data = data
+	return nil
+}
+
+func (o *FakeObject) GetType() string {
+	return o.Type
+}
+
+func (o *FakeObject) Initialize() {}
