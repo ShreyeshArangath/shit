@@ -1,0 +1,132 @@
+package models
+
+import (
+	"bytes"
+	"compress/zlib"
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/ShreyeshArangath/shit/pkg/utils"
+	"github.com/stretchr/testify/assert"
+)
+
+func setupObjectTest(t *testing.T) (string, string, *Repository) {
+	tempDir := t.TempDir()
+	gitDir := filepath.Join(tempDir, utils.GIT_DIR_NAME)
+	err := os.Mkdir(gitDir, 0755)
+	assert.NoError(t, err)
+
+	repo, err := CreateRepository(tempDir, true)
+	assert.NoError(t, err)
+	return tempDir, gitDir, repo
+}
+
+// TODO: Update this test case to use the actual implementation of the tree object
+func TestObjectFactoryCommit(t *testing.T) {
+	_, err := ObjectFactory("commit", []byte{})
+	assert.NoError(t, err)
+}
+
+// TODO: Update this test case to use the actual implementation of the tree object
+func TestObjectFactoryTree(t *testing.T) {
+	_, err := ObjectFactory("tree", []byte{})
+	assert.NoError(t, err)
+}
+
+// TODO: Update this test case to use the actual implementation of the tag object
+func TestObjectFactoryTag(t *testing.T) {
+	_, err := ObjectFactory("tag", []byte{})
+	assert.NoError(t, err)
+}
+
+// TODO: Update this test case to use the actual implementation of the blob object
+func TestObjectFactoryBlob(t *testing.T) {
+	_, err := ObjectFactory("blob", []byte{})
+	assert.NoError(t, err)
+}
+
+func TestObjectFactoryInvalid(t *testing.T) {
+	_, err := ObjectFactory("invalid", []byte{})
+	assert.Error(t, err)
+}
+
+func TestObjectReadValidSHA(t *testing.T) {
+	_, gitDir, repo := setupObjectTest(t)
+
+	// Create a valid object file
+	sha := "1234567890abcdef1234567890abcdef12345678"
+	objectPath := filepath.Join(gitDir, "objects", sha[:2], sha[2:])
+	err := os.MkdirAll(filepath.Dir(objectPath), 0755)
+	assert.NoError(t, err)
+
+	data := []byte("commit\x2010\x00test data")
+	compressedData := new(bytes.Buffer)
+	writer := zlib.NewWriter(compressedData)
+	_, err = writer.Write(data)
+	assert.NoError(t, err)
+	writer.Close()
+	err = os.WriteFile(objectPath, compressedData.Bytes(), 0644)
+	assert.NoError(t, err)
+
+	_, err = ObjectRead(repo, sha)
+	assert.NoError(t, err)
+	// assert.NotNil(t, obj)
+}
+
+func TestObjectReadInvalidSHA(t *testing.T) {
+	_, _, repo := setupObjectTest(t)
+	_, err := ObjectRead(repo, "invalidsha")
+	assert.Error(t, err)
+}
+
+func TestObjectReadMalformedData(t *testing.T) {
+	_, gitDir, repo := setupObjectTest(t)
+
+	// Create a malformed object file
+	sha := "1234567890abcdef1234567890abcdef12345678"
+	objectPath := filepath.Join(gitDir, "objects", sha[:2], sha[2:])
+	err := os.MkdirAll(filepath.Dir(objectPath), 0755)
+	assert.NoError(t, err)
+
+	err = os.WriteFile(objectPath, []byte("malformed data"), 0644)
+	assert.NoError(t, err)
+
+	_, err = ObjectRead(repo, sha)
+	assert.Error(t, err)
+}
+
+func TestReadBinaryFileExists(t *testing.T) {
+	tempDir := t.TempDir()
+	filePath := filepath.Join(tempDir, "testfile")
+	err := os.WriteFile(filePath, []byte("test data"), 0644)
+	assert.NoError(t, err)
+
+	data, err := ReadBinaryFile(filePath)
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("test data"), data)
+}
+
+func TestReadBinaryFileNotExists(t *testing.T) {
+	tempDir := t.TempDir()
+	_, err := ReadBinaryFile(filepath.Join(tempDir, "nonexistent"))
+	assert.Error(t, err)
+}
+
+func TestZlibDecompressValidData(t *testing.T) {
+	data := []byte("test data")
+	var compressedData bytes.Buffer
+	writer := zlib.NewWriter(&compressedData)
+	_, err := writer.Write(data)
+	assert.NoError(t, err)
+	writer.Close()
+
+	decompressedData, err := ZlibDecompress(compressedData.Bytes())
+	assert.NoError(t, err)
+	assert.Equal(t, data, decompressedData.Bytes())
+}
+
+func TestZlibDecompressInvalidData(t *testing.T) {
+	_, err := ZlibDecompress([]byte("invalid data"))
+	assert.Error(t, err)
+}
