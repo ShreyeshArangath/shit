@@ -117,7 +117,7 @@ func (r *Repository) RepoFile(mkdir bool, path ...string) (string, error) {
 	return r.GetRepoPath(path...), nil
 }
 
-// repoFind recursively finds the ".git" directory starting from the given path.
+// RepoFind recursively finds the ".git" directory starting from the given path.
 func RepoFind(path string, required bool) (*Repository, error) {
 	// Convert the path to an absolute path
 	absPath, err := filepath.Abs(path)
