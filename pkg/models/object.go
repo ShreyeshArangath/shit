@@ -24,6 +24,17 @@ type Object interface {
 	Deserialize(data []byte) error
 }
 
+// ObjectFactory creates an object of the specified type from the provided data.
+// It returns an Object and an error if the object type is unknown or if there is an issue
+// with the creation of the object.
+//
+// Parameters:
+//   - objectType: A string representing the type of object to create. Valid values are "commit", "tree", "tag", and "blob".
+//   - data: A byte slice containing the data to be used for creating the object.
+//
+// Returns:
+//   - Object: The created object that implements the Object interface.
+//   - error: An error if the object type is unknown or if there is an issue with the creation of the object.
 func ObjectFactory(objectType string, data []byte) (Object, error) {
 	// To implement the `Object` interface and its methods, we need to define the different types of objects (commit, tree, tag, blob) and their respective serialization and deserialization methods. Below is a basic implementation of the `Object` interface and its methods for each type of object.
 	switch objectType {
@@ -40,7 +51,19 @@ func ObjectFactory(objectType string, data []byte) (Object, error) {
 	}
 }
 
-// Reads the object SHA and returns an Object representation of it.
+// ObjectRead reads an object from the repository using its SHA-1 hash.
+// It first constructs the path to the object file and checks if the file exists.
+// If the file exists, it reads the binary data and decompresses it using zlib.
+// The decompressed data is then parsed to extract the object type and data.
+// If the object is malformed or any error occurs during the process, an error is returned.
+//
+// Parameters:
+//   - repo: A pointer to the Repository from which the object is to be read.
+//   - sha: The SHA-1 hash of the object to be read.
+//
+// Returns:
+//   - Object: The object read from the repository.
+//   - error: An error if any occurs during the reading process.
 func ObjectRead(repo *Repository, sha string) (Object, error) {
 	path := repo.GetRepoPath("objects", sha[:2], sha[2:])
 	isFile, err := utils.IsFile(path)
@@ -79,6 +102,16 @@ func ObjectRead(repo *Repository, sha string) (Object, error) {
 	return ObjectFactory(objectType, []byte(objectData))
 }
 
+// ObjectWrite writes an object to the repository.
+// It serializes the object, computes its hash, and stores it in the repository if it doesn't already exist.
+//
+// Parameters:
+//   - object: The object to be written.
+//   - repo: The repository where the object will be stored.
+//
+// Returns:
+//   - string: The SHA-1 hash of the object.
+//   - error: An error if the operation fails.
 func ObjectWrite(object Object, repo *Repository) (string, error) {
 	data, err := object.Serialize(repo)
 	if err != nil {
@@ -121,6 +154,16 @@ func ObjectFind(repo *Repository, name string, objecttype string, follow bool) (
 	return name, nil
 }
 
+// ObjectHash computes the hash of an object in the repository.
+//
+// Parameters:
+//   - repo: A pointer to the Repository where the object resides.
+//   - objectype: A string representing the type of the object.
+//   - path: A string representing the file path to read the object data from.
+//
+// Returns:
+//   - A string representing the hash of the object.
+//   - An error if any occurs during the process of reading the file, creating the object, or writing the object.
 func ObjectHash(repo *Repository, objectype string, path string) (string, error) {
 	data, err := readBinaryFile(path)
 	object, err := ObjectFactory(objectype, data)
