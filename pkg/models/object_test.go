@@ -225,4 +225,4 @@ func (o *FakeObject) GetType() string {
 	return o.Type
 }
 
-func (o *FakeObject) Initialize() {}
+func (o *FakeObject) Initialize() error { return nil }

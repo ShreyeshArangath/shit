@@ -19,12 +19,12 @@ var log = logrus.New()
 
 type Object interface {
 	GetType() string
-	Initialize()
+	Initialize() error
 	Serialize(repo *Repository) ([]byte, error)
 	Deserialize(data []byte) error
 }
 
-func ObjectFactory(objectType string, data []byte) (*Object, error) {
+func ObjectFactory(objectType string, data []byte) (Object, error) {
 	// To implement the `Object` interface and its methods, we need to define the different types of objects (commit, tree, tag, blob) and their respective serialization and deserialization methods. Below is a basic implementation of the `Object` interface and its methods for each type of object.
 	switch objectType {
 	case "commit":
@@ -34,14 +34,14 @@ func ObjectFactory(objectType string, data []byte) (*Object, error) {
 	case "tag":
 		return nil, nil
 	case "blob":
-		return nil, nil
+		return NewShitBlob(data)
 	default:
 		return nil, &ShitException{Message: fmt.Sprintf("Unknown type %s", objectType)}
 	}
 }
 
 // Reads the object SHA and returns an Object representation of it.
-func ObjectRead(repo *Repository, sha string) (*Object, error) {
+func ObjectRead(repo *Repository, sha string) (Object, error) {
 	path := repo.GetRepoPath("objects", sha[:2], sha[2:])
 	isFile, err := utils.IsFile(path)
 	if err != nil {
