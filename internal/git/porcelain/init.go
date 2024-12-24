@@ -1,4 +1,4 @@
-package git
+package porcelain
 
 import (
 	"fmt"
@@ -8,17 +8,30 @@ import (
 	"github.com/ShreyeshArangath/shit/pkg/models"
 	"github.com/ShreyeshArangath/shit/pkg/utils"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 	"gopkg.in/ini.v1"
 )
 
 var log = logrus.New()
+
+var initCmd = &cobra.Command{
+	Use:   "init",
+	Short: "Initialize a new repository",
+	Run: func(cmd *cobra.Command, args []string) {
+		path, _ := cmd.Flags().GetString("path")
+		_, err := inithelper(path)
+		if err != nil {
+			log.Fatal(err)
+		}
+	},
+}
 
 // .git/objects/ : the object store, which we’ll introduce in the next section.
 // .git/refs/ the reference store, which we’ll discuss a bit later. It contains two subdirectories, heads and tags.
 // .git/HEAD, a reference to the current HEAD (more on that later!)
 // .git/config, the repository’s configuration file.
 // .git/description, holds a free-form description of this repository’s contents, for humans, and is rarely used.
-func Init(path string) (bool, error) {
+func inithelper(path string) (bool, error) {
 	// Create the new shit repository
 	repo, err := models.CreateRepository(path, true)
 	if err != nil {
@@ -114,4 +127,12 @@ func Init(path string) (bool, error) {
 	}
 	log.Debugf("Config file saved to %s", configFilePath)
 	return true, nil
+}
+
+func GetInitCmd() *cobra.Command {
+	return initCmd
+}
+
+func init() {
+	initCmd.Flags().StringP("path", "p", ".", "Where to create the repository.")
 }

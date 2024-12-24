@@ -3,7 +3,8 @@ package main
 import (
 	"fmt"
 
-	porcelain "github.com/ShreyeshArangath/shit/internal/git/porcelain"
+	"github.com/ShreyeshArangath/shit/internal/git/plumbing"
+	"github.com/ShreyeshArangath/shit/internal/git/porcelain"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -19,22 +20,13 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-var initCmd = &cobra.Command{
-	Use:   "init",
-	Short: "Initialize a new repository",
-	Run: func(cmd *cobra.Command, args []string) {
-		path, _ := cmd.Flags().GetString("path")
-		porcelain.Init(path)
-	},
-}
-
 func main() {
 	if err := rootCmd.Execute(); err != nil {
-		log.Println(err)
+		log.Fatal(err)
 	}
 }
 
 func init() {
-	rootCmd.AddCommand(initCmd)
-	initCmd.Flags().StringP("path", "p", ".", "Where to create the repository.")
+	rootCmd.AddCommand(porcelain.GetInitCmd())
+	rootCmd.AddCommand(plumbing.GetCatFileCmd())
 }

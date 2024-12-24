@@ -63,7 +63,6 @@ func ObjectRead(repo *Repository, sha string) (Object, error) {
 	}
 
 	decompressedDataStr := decompressedData.String()
-	// Read the object type
 	spaceIndex := strings.Index(decompressedDataStr, " ")
 	objectType := decompressedDataStr[:spaceIndex]
 	if spaceIndex == -1 {
@@ -72,14 +71,10 @@ func ObjectRead(repo *Repository, sha string) (Object, error) {
 
 	// Read and validate the object size
 	objectSizeIndex := strings.Index(decompressedDataStr, "\x00")
-	objectSize, err := strconv.Atoi(decompressedDataStr[spaceIndex+1 : objectSizeIndex])
+	_, err = strconv.Atoi(decompressedDataStr[spaceIndex+1 : objectSizeIndex])
 	if err != nil {
 		return nil, err
 	}
-	if objectSize != (len(decompressedDataStr) - objectSizeIndex) {
-		return nil, &ShitException{Message: fmt.Sprintf("Malformed object (bad length) %s", sha)}
-	}
-
 	objectData := decompressedDataStr[objectSizeIndex+1:]
 	return ObjectFactory(objectType, []byte(objectData))
 }
@@ -120,6 +115,10 @@ func ObjectWrite(object Object, repo Repository) (string, error) {
 		}
 	}
 	return sha, nil
+}
+
+func ObjectFind(repo *Repository, name string, objecttype string, follow bool) (string, error) {
+	return name, nil
 }
 
 func readBinaryFile(path string) ([]byte, error) {
