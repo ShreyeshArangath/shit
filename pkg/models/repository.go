@@ -122,7 +122,7 @@ func RepoFind(path string, required bool) (*Repository, error) {
 	// Convert the path to an absolute path
 	absPath, err := filepath.Abs(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to resolve absolute path: %w", err)
+		return nil, err
 	}
 
 	// Check if ".git" exists in the current directory
