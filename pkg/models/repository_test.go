@@ -110,3 +110,43 @@ func TestRepoFileDNEDoNotCreate(t *testing.T) {
 	_, err = repo.RepoFile(false, "helloworld", "nonexistentfile")
 	assert.Error(t, err)
 }
+
+func TestRepoFindHappyPath(t *testing.T) {
+	tempDir, gitDir := setupTest(t)
+	repo, err := RepoFind(tempDir, true)
+	assert.NoError(t, err)
+	assert.NotNil(t, repo)
+	assert.Equal(t, tempDir, repo.Worktree)
+	assert.Equal(t, gitDir, repo.GitDir)
+}
+
+func TestRepoFindNonExistentPath(t *testing.T) {
+	_, err := RepoFind("/invalid/path", true)
+	assert.Error(t, err)
+}
+
+func TestRepoFindNoGitDir(t *testing.T) {
+	tempDir := t.TempDir()
+	_, err := RepoFind(tempDir, true)
+	assert.Error(t, err)
+}
+
+func TestRepoFindNoGitDirNotRequired(t *testing.T) {
+	tempDir := t.TempDir()
+	repo, err := RepoFind(tempDir, false)
+	assert.NoError(t, err)
+	assert.Nil(t, repo)
+}
+
+func TestRepoFindInParentDir(t *testing.T) {
+	tempDir, gitDir := setupTest(t)
+	subDir := filepath.Join(tempDir, "subdir")
+	err := os.Mkdir(subDir, 0755)
+	assert.NoError(t, err)
+
+	repo, err := RepoFind(subDir, true)
+	assert.NoError(t, err)
+	assert.NotNil(t, repo)
+	assert.Equal(t, tempDir, repo.Worktree)
+	assert.Equal(t, gitDir, repo.GitDir)
+}

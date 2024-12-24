@@ -116,3 +116,30 @@ func (r *Repository) RepoFile(mkdir bool, path ...string) (string, error) {
 	}
 	return r.GetRepoPath(path...), nil
 }
+
+// RepoFind recursively finds the ".git" directory starting from the given path.
+func RepoFind(path string, required bool) (*Repository, error) {
+	// Convert the path to an absolute path
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve absolute path: %w", err)
+	}
+
+	// Check if ".git" exists in the current directory
+	gitPath := filepath.Join(absPath, ".git")
+	isDir, err := utils.IsDir(gitPath)
+	if isDir {
+		return CreateRepository(absPath, false)
+	}
+
+	// Determine the parent directory
+	parent := filepath.Dir(absPath)
+	if parent == absPath {
+		// If we've reached the root directory
+		if required {
+			return nil, &ShitException{Message: fmt.Sprintf("no git directory found in %s", path)}
+		}
+		return nil, nil
+	}
+	return RepoFind(parent, required)
+}
