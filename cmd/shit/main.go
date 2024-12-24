@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/ShreyeshArangath/shit/internal/git"
+	porcelain "github.com/ShreyeshArangath/shit/internal/git/porcelain"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -24,7 +24,7 @@ var initCmd = &cobra.Command{
 	Short: "Initialize a new repository",
 	Run: func(cmd *cobra.Command, args []string) {
 		path, _ := cmd.Flags().GetString("path")
-		git.Init(path)
+		porcelain.Init(path)
 	},
 }
 
