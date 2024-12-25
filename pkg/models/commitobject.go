@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+
 	orderedmap "github.com/wk8/go-ordered-map/v2"
 )
 
@@ -21,7 +23,7 @@ func (b *ShitCommit) Initialize() error {
 func (b *ShitCommit) Serialize(repo *Repository) ([]byte, error) {
 	serialized, err := KVLMSerialize(b.KVLM)
 	if err != nil {
-		return nil, err
+		return nil, &ShitException{Message: fmt.Sprintf("Failed to serialize commit object: %v", err)}
 	}
 	return []byte(serialized), nil
 }
@@ -29,7 +31,7 @@ func (b *ShitCommit) Serialize(repo *Repository) ([]byte, error) {
 func (b *ShitCommit) Deserialize(data []byte) error {
 	kvlm, err := KVLMDeserialize(string(data))
 	if err != nil {
-		return err
+		return &ShitException{Message: fmt.Sprintf("Failed to deserialize commit object: %v", err)}
 	}
 	b.KVLM = kvlm
 	return nil
