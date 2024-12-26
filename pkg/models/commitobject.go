@@ -2,13 +2,11 @@ package models
 
 import (
 	"fmt"
-
-	orderedmap "github.com/wk8/go-ordered-map/v2"
 )
 
 type ShitCommit struct {
-	Data []byte
-	KVLM *KVLM
+	Data           []byte
+	CommitMetadata *ShitCommitMetadata
 }
 
 func (b *ShitCommit) GetType() string {
@@ -16,12 +14,11 @@ func (b *ShitCommit) GetType() string {
 }
 
 func (b *ShitCommit) Initialize() error {
-	b.KVLM = CreateKVLM(orderedmap.New[string, []string]())
 	return nil
 }
 
 func (b *ShitCommit) Serialize(repo *Repository) ([]byte, error) {
-	serialized, err := KVLMSerialize(b.KVLM)
+	serialized, err := b.CommitMetadata.Serialize()
 	if err != nil {
 		return nil, &ShitException{Message: fmt.Sprintf("Failed to serialize commit object: %v", err)}
 	}
@@ -29,10 +26,10 @@ func (b *ShitCommit) Serialize(repo *Repository) ([]byte, error) {
 }
 
 func (b *ShitCommit) Deserialize(data []byte) error {
-	kvlm, err := KVLMDeserialize(string(data))
+	metadata, err := CreateShitCommitMetadata(string(data))
+	b.CommitMetadata = metadata
 	if err != nil {
 		return &ShitException{Message: fmt.Sprintf("Failed to deserialize commit object: %v", err)}
 	}
-	b.KVLM = kvlm
 	return nil
 }
