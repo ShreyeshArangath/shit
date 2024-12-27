@@ -33,3 +33,16 @@ func (b *ShitCommit) Deserialize(data []byte) error {
 	}
 	return nil
 }
+
+func NewShitCommit(data []byte) (*ShitCommit, error) {
+	commitObject := &ShitCommit{
+		Data: data,
+	}
+	var err error
+	if len(data) == 0 {
+		err = commitObject.Initialize()
+	} else {
+		err = commitObject.Deserialize(data)
+	}
+	return commitObject, err
+}

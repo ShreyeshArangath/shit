@@ -39,7 +39,7 @@ func ObjectFactory(objectType string, data []byte) (Object, error) {
 	// To implement the `Object` interface and its methods, we need to define the different types of objects (commit, tree, tag, blob) and their respective serialization and deserialization methods. Below is a basic implementation of the `Object` interface and its methods for each type of object.
 	switch objectType {
 	case "commit":
-		return nil, nil
+		return NewShitCommit(data)
 	case "tree":
 		return nil, nil
 	case "tag":
