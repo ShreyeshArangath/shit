@@ -1,6 +1,7 @@
 package porcelain
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/ShreyeshArangath/shit/pkg/models"
@@ -53,11 +54,11 @@ func loghelper(repo *models.Repository, sha string, seen mapset.Set[string]) err
 	if strings.Contains(message, "\n") {
 		message = strings.Split(message, "\n")[0]
 	}
-	log.Printf(" c_%s [label=\"%s: %s\"]", sha, short_hash, message)
+	fmt.Printf(" c_%s [label=\"%s: %s\"]\n", sha, short_hash, message)
 	parents := commit.CommitMetadata.GetParent()
 	if len(parents) > 0 {
 		for _, parent := range parents {
-			log.Printf(" c_%s -> c_%s", sha, parent)
+			fmt.Printf(" c_%s -> c_%s\n", sha, parent)
 			err = loghelper(repo, parent, seen)
 			if err != nil {
 				return err
