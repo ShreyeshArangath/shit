@@ -53,18 +53,18 @@ func loghelper(repo *models.Repository, sha string, seen mapset.Set[string]) err
 	}
 	commit, ok := obj.(*models.ShitCommit)
 	if !ok {
-		log.Fatalf("Object %s is not a commit", sha)
+		log.Fatalf("Object %s is not of the type commit", sha)
 		return nil
 	}
 	if err != nil {
 		return err
 	}
-	short_hash := sha[:8]
+	shortHash := sha[:8]
 	message := strings.TrimSpace(commit.CommitMetadata.GetMessage())
 	if strings.Contains(message, "\n") {
 		message = strings.Split(message, "\n")[0]
 	}
-	fmt.Printf(" c_%s [label=\"%s: %s\"]\n", sha, short_hash, message)
+	fmt.Printf(" c_%s [label=\"%s: %s\"]\n", sha, shortHash, message)
 	parents := commit.CommitMetadata.GetParent()
 	if len(parents) > 0 {
 		for _, parent := range parents {
