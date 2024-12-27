@@ -30,4 +30,5 @@ func init() {
 	rootCmd.AddCommand(porcelain.GetInitCmd())
 	rootCmd.AddCommand(plumbing.GetCatFileCmd())
 	rootCmd.AddCommand(plumbing.GetHashObjectCmd())
+	rootCmd.AddCommand(porcelain.GetLogCmd())
 }
