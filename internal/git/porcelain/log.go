@@ -30,8 +30,18 @@ var logCmd = &cobra.Command{
 	},
 }
 
+// loghelper traverses the commit history of a repository starting from a given commit SHA,
+// printing the commit details and their parent relationships in a specific format.
+// It uses a set to keep track of seen commits to avoid processing the same commit multiple times.
+//
+// Parameters:
+// - repo: A pointer to the Repository object representing the Git repository.
+// - sha: The SHA-1 hash of the commit to start traversing from.
+// - seen: A set of strings to keep track of already processed commits.
+//
+// Returns:
+// - An error if any occurs during the processing of commits, otherwise nil.
 func loghelper(repo *models.Repository, sha string, seen mapset.Set[string]) error {
-	// Example usage of the set
 	if seen.Contains(sha) {
 		return nil
 	}
