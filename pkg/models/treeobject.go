@@ -49,3 +49,16 @@ func (t *ShitTree) Deserialize(data []byte) error {
 	t.Items = items
 	return nil
 }
+
+func NewShitTree(data []byte) (*ShitTree, error) {
+	treeObject := &ShitTree{
+		Data: data,
+	}
+	var err error
+	if len(data) == 0 {
+		err = treeObject.Initialize()
+	} else {
+		err = treeObject.Deserialize(data)
+	}
+	return treeObject, err
+}

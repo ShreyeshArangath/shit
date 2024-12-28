@@ -27,9 +27,8 @@ func ParseLeaf(raw []byte, start int) (int, TreeLeaf, error) {
 	// Read the mode and normalize to six bytes if needed
 	mode := raw[start:x]
 	if len(mode) == 5 {
-		mode = append([]byte(" "), mode...)
+		mode = append([]byte("0"), mode...)
 	}
-
 	// Find the NULL terminator of the path
 	y := bytes.IndexByte(raw[x+1:], '\x00')
 	if y == -1 {

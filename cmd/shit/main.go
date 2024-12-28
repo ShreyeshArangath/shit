@@ -31,4 +31,5 @@ func init() {
 	rootCmd.AddCommand(plumbing.GetCatFileCmd())
 	rootCmd.AddCommand(plumbing.GetHashObjectCmd())
 	rootCmd.AddCommand(porcelain.GetLogCmd())
+	rootCmd.AddCommand(plumbing.GetLsTreeCmd())
 }

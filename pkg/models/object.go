@@ -41,7 +41,7 @@ func ObjectFactory(objectType string, data []byte) (Object, error) {
 	case "commit":
 		return NewShitCommit(data)
 	case "tree":
-		return nil, nil
+		return NewShitTree(data)
 	case "tag":
 		return nil, nil
 	case "blob":
