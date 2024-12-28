@@ -62,5 +62,30 @@ func ParseLeaf(raw []byte, start int) (int, TreeLeaf, error) {
 }
 
 func (t TreeLeaf) Serialize() ([]byte, error) {
-	return nil, nil
+	// mode + space + path + null + sha
+	var buffer bytes.Buffer
+
+	// Add the mode
+	buffer.WriteString(t.Mode)
+	buffer.WriteByte(' ') // Space separator
+
+	// Add the path
+	buffer.WriteString(t.Path)
+	buffer.WriteByte(0) // NULL terminator
+
+	// Convert the SHA from hexadecimal to bytes
+	shaBytes := make([]byte, 20)
+	_, err := fmt.Sscanf(t.Sha, "%40x", &shaBytes)
+	if err != nil {
+		return nil, fmt.Errorf("invalid SHA: %w", err)
+	}
+	buffer.Write(shaBytes)
+	return buffer.Bytes(), nil
+}
+
+func (t TreeLeaf) SortKey() string {
+	if t.Mode[:2] == "10" {
+		return t.Path
+	}
+	return t.Path + "/"
 }
