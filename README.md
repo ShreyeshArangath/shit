@@ -14,9 +14,6 @@ To get this running locally:
 
 ## Usage 
 
-### shit --help
-This should help you get a list of all the supported commands 
+Checkout the documentation [here](./docs/shit.md)
 
-### shit init 
-
-> This project is just me trying to recreate git. I'll be trying to follow the resource [here](https://wyag.thb.lt/#init) as reference. 
+> Also thanks grok for the logo. 
