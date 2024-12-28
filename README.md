@@ -1,4 +1,6 @@
 # shit
+<img src="shit_logo_grok.jpg" alt="shit logo" width="400"/>
+
 shreyesh's git (shit) impl
 
 > This project is just me trying to recreate git. I'll be trying to follow the resource [here](https://wyag.thb.lt/#init) as reference. 
@@ -12,7 +14,6 @@ To get this running locally:
 
 ## Usage 
 
-### shit --help
-This should help you get a list of all the supported commands 
+Checkout the documentation [here](./docs/shit.md)
 
-### shit init 
+> Also thanks grok for the logo. 
