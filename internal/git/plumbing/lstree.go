@@ -41,12 +41,12 @@ func lsTreeHelper(repo *models.Repository, ref string, recursive bool, prefix st
 	}
 	var objecttype string
 	for _, item := range tree.Items {
-		objecttype = item.Mode[0:2]
-		// if len(item.Mode) == 5 {
-		// 	objecttype = item.Mode[0:1]
-		// } else {
-		// 	objecttype = item.Mode[0:2]
-		// }
+		// objecttype = item.Mode[0:2]
+		if len(item.Mode) == 5 {
+			objecttype = item.Mode[0:1]
+		} else {
+			objecttype = item.Mode[0:2]
+		}
 		switch objecttype {
 		case "04":
 			objecttype = "tree"
@@ -59,7 +59,7 @@ func lsTreeHelper(repo *models.Repository, ref string, recursive bool, prefix st
 		default:
 			return fmt.Errorf("unknown object type: %s", objecttype)
 		}
-		if !recursive && objecttype == "tree" {
+		if !(recursive && objecttype == "tree") {
 			mode := fmt.Sprintf("%06s", item.Mode)
 			fmt.Printf("%s %s %s\t%s\n",
 				mode,
