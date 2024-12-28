@@ -13,10 +13,6 @@ type TreeLeaf struct {
 }
 
 func ParseLeaf(raw []byte, start int) (int, TreeLeaf, error) {
-	// file mode terminated by  0x20
-	// path terminated by null
-	// sha 1  40 bytes
-	// Find the space terminator of the mode
 	x := bytes.IndexByte(raw[start:], ' ')
 	if x == -1 {
 		return 0, TreeLeaf{}, fmt.Errorf("space not found for mode")
