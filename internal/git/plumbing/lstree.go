@@ -26,6 +26,20 @@ var lsTreeCmd = &cobra.Command{
 	},
 }
 
+// lsTreeHelper recursively lists the contents of a tree object in a shit repository.
+//
+// Parameters:
+//   - repo: A pointer to the Repository object representing the shit repository.
+//   - ref: A string representing the reference (branch, tag, or commit SHA) to list the tree from.
+//   - recursive: A boolean indicating whether to list tree contents recursively.
+//   - prefix: A string representing the prefix to prepend to the file paths in the output.
+//
+// Returns:
+//   - error: An error if any occurs during the operation, otherwise nil.
+//
+// The function retrieves the tree object corresponding to the given reference and iterates over its items.
+// For each item, it determines the object type (tree, blob, commit) and prints its details.
+// If the recursive flag is set and the item is a tree, the function calls itself recursively to list the contents of the subtree.
 func lsTreeHelper(repo *models.Repository, ref string, recursive bool, prefix string) error {
 	sha, err := models.ObjectFind(repo, ref, "tree", false)
 	if err != nil {
@@ -41,7 +55,6 @@ func lsTreeHelper(repo *models.Repository, ref string, recursive bool, prefix st
 	}
 	var objecttype string
 	for _, item := range tree.Items {
-		// objecttype = item.Mode[0:2]
 		if len(item.Mode) == 5 {
 			objecttype = item.Mode[0:1]
 		} else {

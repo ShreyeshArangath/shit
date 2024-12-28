@@ -12,6 +12,17 @@ type TreeLeaf struct {
 	Sha  string
 }
 
+// ParseLeaf parses a raw byte slice starting from a given index to extract a TreeLeaf.
+// It expects the raw data to be in a specific format containing mode, path, and SHA.
+//
+// Parameters:
+//   - raw: The raw byte slice to parse.
+//   - start: The starting index in the raw byte slice.
+//
+// Returns:
+//   - int: The index after the parsed TreeLeaf.
+//   - TreeLeaf: The parsed TreeLeaf containing mode, path, and SHA.
+//   - error: An error if parsing fails due to invalid format or insufficient data.
 func ParseLeaf(raw []byte, start int) (int, TreeLeaf, error) {
 	x := bytes.IndexByte(raw[start:], ' ')
 	if x == -1 {
@@ -56,6 +67,13 @@ func ParseLeaf(raw []byte, start int) (int, TreeLeaf, error) {
 
 }
 
+// Serialize converts the TreeLeaf struct into a byte slice following the
+// format: mode + space + path + null + sha. It returns the serialized byte
+// slice or an error if the SHA is invalid.
+//
+// Returns:
+//   - []byte: The serialized byte slice.
+//   - error: An error if the SHA is invalid.
 func (t TreeLeaf) Serialize() ([]byte, error) {
 	// mode + space + path + null + sha
 	var buffer bytes.Buffer
@@ -78,6 +96,9 @@ func (t TreeLeaf) Serialize() ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
+// SortKey returns a string that can be used as a sorting key for TreeLeaf objects.
+// If the Mode of the TreeLeaf starts with "10", it returns the Path as is.
+// Otherwise, it appends a "/" to the Path before returning it.
 func (t TreeLeaf) SortKey() string {
 	if t.Mode[:2] == "10" {
 		return t.Path
