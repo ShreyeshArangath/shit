@@ -90,3 +90,7 @@ func init() {
 	checkoutCmd.Flags().StringP("commit", "c", "", "Commit to checkout")
 	checkoutCmd.Flags().StringP("path", "p", "", "The empty directory to checkout on")
 }
+
+func GetCheckoutCmd() *cobra.Command {
+	return checkoutCmd
+}
