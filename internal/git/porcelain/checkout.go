@@ -55,7 +55,14 @@ var checkoutCmd = &cobra.Command{
 				log.Fatalf("Path %s is not an empty directory", path)
 			}
 		}
-		checkouthelper(repo, tree, path)
+		abspath, err := filepath.Abs(path)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = checkouthelper(repo, tree, abspath)
+		if err != nil {
+			log.Fatal(err)
+		}
 	},
 }
 
