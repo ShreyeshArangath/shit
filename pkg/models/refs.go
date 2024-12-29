@@ -15,6 +15,24 @@ const (
 
 type RefMap map[string]interface{} // Allows for nested maps
 
+// ResolveRef resolves a Git reference to its corresponding commit hash.
+// It takes a Repository object and a reference string as input, and returns
+// the resolved commit hash as a string, or an error if the resolution fails.
+//
+// The function first computes the relative path of the reference file within
+// the repository's Git directory. It then reads the content of the reference
+// file, which should contain the commit hash or another reference.
+//
+// If the reference points to another reference (indicated by the REFERENCE_PREFIX),
+// the function recursively resolves the new reference.
+//
+// Parameters:
+// - repo: A pointer to the Repository object.
+// - ref: The reference string to resolve.
+//
+// Returns:
+// - A string containing the resolved commit hash.
+// - An error if the resolution process fails.
 func ResolveRef(repo *Repository, ref string) (string, error) {
 	relPath, err := filepath.Rel(repo.GitDir, ref)
 	path, err := repo.RepoFile(false, relPath)
@@ -34,6 +52,21 @@ func ResolveRef(repo *Repository, ref string) (string, error) {
 	return datastr, nil
 }
 
+// ListRef lists all references in the given repository and path.
+// If the path is empty, it defaults to the "refs" directory in the repository.
+//
+// Parameters:
+//   - repo: A pointer to the Repository struct.
+//   - path: A string representing the path to list references from.
+//
+// Returns:
+//   - RefMap: A map of references found in the specified path.
+//   - error: An error if any occurred during the operation.
+//
+// The function reads the directory contents, sorts them alphabetically,
+// and iterates through each entry. If an entry is a directory, it recurses
+// into the subdirectory. If an entry is a file, it resolves the reference
+// using the ResolveRef helper function.
 func ListRef(repo *Repository, path string) (RefMap, error) {
 	if path == "" {
 		var err error
