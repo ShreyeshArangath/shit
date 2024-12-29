@@ -35,7 +35,7 @@ func showRef(refs models.RefMap, withHash bool, prefix string) {
 			if withHash {
 				fmt.Printf("%s %s%s\n", value, prefixWithSlash(prefix), k)
 			} else {
-				fmt.Printf("%s%s\n", prefixWithSlash(prefix), k)
+				fmt.Printf("%s %s\n", prefixWithSlash(prefix), k)
 			}
 		case models.RefMap: // If the value is another map, recurse
 			newPrefix := fmt.Sprintf("%s%s%s", prefix, addSlashIfNeeded(prefix), k)
