@@ -20,7 +20,7 @@ func ResolveRef(repo *Repository, ref string) (string, error) {
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return "", err
+		return "", nil
 	}
 	// Drop the last \n
 	data = data[:len(data)-1]

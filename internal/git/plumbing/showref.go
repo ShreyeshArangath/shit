@@ -39,7 +39,9 @@ func showRef(refs models.RefMap, withHash bool, prefix string) {
 			}
 		case models.RefMap: // If the value is another map, recurse
 			newPrefix := fmt.Sprintf("%s%s%s", prefix, addSlashIfNeeded(prefix), k)
-			showRef(value, withHash, newPrefix)
+			// cast v to models.RefMap
+			v := v.(models.RefMap)
+			showRef(v, withHash, newPrefix)
 		default:
 			fmt.Printf("Unexpected type: %v\n", reflect.TypeOf(v))
 		}
