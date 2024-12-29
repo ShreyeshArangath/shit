@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/ShreyeshArangath/shit/pkg/utils"
 )
 
 const (
@@ -14,16 +16,17 @@ const (
 type RefMap map[string]interface{} // Allows for nested maps
 
 func ResolveRef(repo *Repository, ref string) (string, error) {
-	path, err := repo.RepoFile(false, ref)
+	relPath, err := filepath.Rel(repo.GitDir, ref)
+	path, err := repo.RepoFile(false, relPath)
 	if err != nil {
 		return "", err
 	}
 	data, err := os.ReadFile(path)
+	// fmt.Println("Reading file:", path, "with data:", string(data))
 	if err != nil {
 		return "", nil
 	}
 	// Drop the last \n
-	data = data[:len(data)-1]
 	datastr := string(data)
 	if strings.HasPrefix(datastr, REFERENCE_PREFIX) {
 		return ResolveRef(repo, datastr[len(REFERENCE_PREFIX):])
@@ -55,6 +58,9 @@ func ListRef(repo *Repository, path string) (RefMap, error) {
 
 	for _, entry := range entries {
 		fullPath := filepath.Join(path, entry.Name())
+		if ok, _ := utils.PathExists(fullPath); !ok {
+			continue
+		}
 		if entry.IsDir() {
 			// Recurse into subdirectories
 			subRefs, err := ListRef(repo, fullPath)
