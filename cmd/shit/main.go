@@ -39,6 +39,7 @@ func init() {
 	rootCmd.AddCommand(porcelain.GetLogCmd())
 	rootCmd.AddCommand(plumbing.GetLsTreeCmd())
 	rootCmd.AddCommand(porcelain.GetCheckoutCmd())
+	rootCmd.AddCommand(plumbing.GetShowRefCmd())
 	// Create the directory to store the documentation
 	err := os.MkdirAll("docs", 0755)
 	if err != nil {
