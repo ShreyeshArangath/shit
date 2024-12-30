@@ -37,3 +37,36 @@ func TestResolveRefHappyPath(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "0fa6863b05513c03ea85033be9cf95d2ca035e27", hash)
 }
+func TestListRefHappyPath(t *testing.T) {
+	tempDir := setup(t)
+	repo, err := CreateRepository(tempDir, false)
+	assert.NoError(t, err)
+
+	refs, err := ListRef(repo, "")
+	assert.NoError(t, err)
+
+	expectedRefs := RefMap{"remote": RefMap{"origin": RefMap{"HEAD": "", "main": "0fa6863b05513c03ea85033be9cf95d2ca035e27"}}}
+
+	assert.Equal(t, expectedRefs, refs)
+}
+
+func TestListRefEmptyRepo(t *testing.T) {
+	tempDir := setup(t)
+	repo, err := CreateRepository(tempDir, false)
+	assert.NoError(t, err)
+
+	// Remove the refs directory to simulate an empty repository
+	err = os.RemoveAll(filepath.Join(repo.GitDir, "refs"))
+	assert.NoError(t, err)
+	_, err = ListRef(repo, "")
+	assert.Error(t, err)
+}
+
+func TestListRefInvalidPath(t *testing.T) {
+	tempDir := setup(t)
+	repo, err := CreateRepository(tempDir, false)
+	assert.NoError(t, err)
+
+	_, err = ListRef(repo, "invalid/path")
+	assert.Error(t, err)
+}
