@@ -37,6 +37,16 @@ func TestResolveRefHappyPath(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "0fa6863b05513c03ea85033be9cf95d2ca035e27", hash)
 }
+
+func TestResolveRefHappyPathNested(t *testing.T) {
+	tempDir := setup(t)
+	repo, err := CreateRepository(tempDir, false)
+	assert.NoError(t, err)
+	hash, err := ResolveRef(repo, filepath.Join(tempDir, ".git/refs/remote/origin/HEAD"))
+	assert.NoError(t, err)
+	assert.Equal(t, "0fa6863b05513c03ea85033be9cf95d2ca035e27", hash)
+}
+
 func TestListRefHappyPath(t *testing.T) {
 	tempDir := setup(t)
 	repo, err := CreateRepository(tempDir, false)
@@ -45,7 +55,7 @@ func TestListRefHappyPath(t *testing.T) {
 	refs, err := ListRef(repo, "")
 	assert.NoError(t, err)
 
-	expectedRefs := RefMap{"remote": RefMap{"origin": RefMap{"HEAD": "", "main": "0fa6863b05513c03ea85033be9cf95d2ca035e27"}}}
+	expectedRefs := RefMap{"remote": RefMap{"origin": RefMap{"HEAD": "0fa6863b05513c03ea85033be9cf95d2ca035e27", "main": "0fa6863b05513c03ea85033be9cf95d2ca035e27"}}}
 
 	assert.Equal(t, expectedRefs, refs)
 }
