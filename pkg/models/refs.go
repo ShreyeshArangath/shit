@@ -47,7 +47,8 @@ func ResolveRef(repo *Repository, ref string) (string, error) {
 	data = data[:len(data)-1]
 	datastr := string(data)
 	if strings.HasPrefix(datastr, REFERENCE_PREFIX) {
-		return ResolveRef(repo, datastr[len(REFERENCE_PREFIX):])
+		newRef := filepath.Join(repo.GitDir, datastr[len(REFERENCE_PREFIX):])
+		return ResolveRef(repo, newRef)
 	}
 	return datastr, nil
 }
