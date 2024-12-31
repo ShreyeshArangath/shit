@@ -18,3 +18,13 @@ func TestShitMetadataCreate(t *testing.T) {
 	assert.Equal(t, "Shreyesh Arangath <sarangath@google.com> 1735610175 +0300", metadata.tagger)
 	assert.Equal(t, "test", metadata.message)
 }
+
+func TestShitMetadataSerialize(t *testing.T) {
+	data, err := os.ReadFile("testdata/tag")
+	assert.NoError(t, err)
+	metadata, err := CreateShitTagMetadata(string(data))
+	assert.NoError(t, err)
+	serialized, err := metadata.Serialize()
+	assert.NoError(t, err)
+	assert.Equal(t, string(data), serialized)
+}
