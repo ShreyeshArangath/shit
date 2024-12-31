@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -113,4 +114,30 @@ func ListRef(repo *Repository, path string) (RefMap, error) {
 	}
 
 	return ret, nil
+}
+
+// CreateRef creates a new reference in the given repository.
+// It takes a repository pointer, a reference name, and a SHA string as inputs.
+// The function constructs the reference path, writes the SHA to the reference file,
+// and returns an error if any operation fails.
+//
+// Parameters:
+//   - repo: A pointer to the Repository where the reference will be created.
+//   - ref: The name of the reference to be created.
+//   - sha: The SHA string to be written to the reference file.
+//
+// Returns:
+//   - error: An error if any operation fails, otherwise nil.
+func CreateRef(repo *Repository, ref string, sha string) error {
+	refName := filepath.Join("refs/", ref)
+	refPath, err := repo.RepoFile(true, refName)
+	if err != nil {
+		return err
+	}
+	data := fmt.Sprintf("%s\n", sha)
+	err = os.WriteFile(refPath, []byte(data), 0644)
+	if err != nil {
+		return err
+	}
+	return nil
 }
