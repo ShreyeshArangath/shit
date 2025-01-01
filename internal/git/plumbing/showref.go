@@ -20,7 +20,7 @@ var ShowRefCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-		showRef(refList, true, "")
+		ShowRef(refList, true, "")
 	},
 }
 
@@ -28,7 +28,7 @@ func GetShowRefCmd() *cobra.Command {
 	return ShowRefCmd
 }
 
-func showRef(refs models.RefMap, withHash bool, prefix string) {
+func ShowRef(refs models.RefMap, withHash bool, prefix string) {
 	for k, v := range refs {
 		switch value := v.(type) {
 		case string: // If the value is a string, it's a leaf
@@ -41,7 +41,7 @@ func showRef(refs models.RefMap, withHash bool, prefix string) {
 			newPrefix := fmt.Sprintf("%s%s%s", prefix, addSlashIfNeeded(prefix), k)
 			// cast v to models.RefMap
 			v := v.(models.RefMap)
-			showRef(v, withHash, newPrefix)
+			ShowRef(v, withHash, newPrefix)
 		default:
 			fmt.Printf("Unexpected type: %v\n", reflect.TypeOf(v))
 		}
