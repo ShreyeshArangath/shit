@@ -13,14 +13,17 @@ var tagCmd = &cobra.Command{
 	Short: "List and create shit tag objects",
 	Run: func(cmd *cobra.Command, args []string) {
 		repo, err := models.RepoFind(".", true)
+		tag, err := cmd.Flags().GetString("tag")
+		object, err := cmd.Flags().GetString("object")
+		create, err := cmd.Flags().GetBool("create")
 		if err != nil {
 			log.Fatal(err)
 		}
-		tag, _ := cmd.Flags().GetString("tag")
-		object, _ := cmd.Flags().GetString("object")
-		create, _ := cmd.Flags().GetBool("create")
 		if tag != "" {
-			tagCreateHelper(repo, tag, object, create)
+			err = tagCreateHelper(repo, tag, object, create)
+			if err != nil {
+				log.Fatal(err)
+			}
 		} else {
 			refs, err := models.ListRef(repo, "")
 			if err != nil {
@@ -63,9 +66,15 @@ func tagCreateHelper(repo *models.Repository, tag string, ref string, create boo
 		if err != nil {
 			return err
 		}
-		models.CreateRef(repo, fmt.Sprintf("refs/tags/%s", tag), tagSha)
+		err = models.CreateRef(repo, fmt.Sprintf("tags/%s", tag), tagSha)
+		if err != nil {
+			return err
+		}
 	} else {
-		models.CreateRef(repo, fmt.Sprintf("refs/tags/%s", tag), sha)
+		models.CreateRef(repo, fmt.Sprintf("tags/%s", tag), sha)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
