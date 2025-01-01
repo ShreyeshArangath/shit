@@ -57,3 +57,18 @@ func CreateShitTagMetadata(data string) (*ShitTagMetadata, error) {
 	m.message = msgbuf.String()
 	return m, nil
 }
+
+func CreateShitTagMetadataFromAttr(
+	object string,
+	objecttype string,
+	tag string,
+	tagger string,
+	message string) *ShitTagMetadata {
+	return &ShitTagMetadata{
+		object:     object,
+		objecttype: objecttype,
+		tag:        tag,
+		tagger:     tagger,
+		message:    message,
+	}
+}
