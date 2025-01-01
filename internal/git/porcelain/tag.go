@@ -22,6 +22,10 @@ var tagCmd = &cobra.Command{
 	},
 }
 
+func GetTagCmd() *cobra.Command {
+	return tagCmd
+}
+
 func init() {
 	tagCmd.Flags().StringP("tag", "t", "", "Tag name")
 	tagCmd.Flags().BoolP("create", "c", false, "Create a new tag")
