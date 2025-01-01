@@ -43,7 +43,7 @@ func ObjectFactory(objectType string, data []byte) (Object, error) {
 	case "tree":
 		return NewShitTree(data)
 	case "tag":
-		return nil, nil
+		return NewShitTag(data)
 	case "blob":
 		return NewShitBlob(data)
 	default:
