@@ -3,6 +3,7 @@ package porcelain
 import (
 	"fmt"
 
+	"github.com/ShreyeshArangath/shit/internal/git/plumbing"
 	"github.com/ShreyeshArangath/shit/pkg/models"
 	"github.com/spf13/cobra"
 )
@@ -18,7 +19,19 @@ var tagCmd = &cobra.Command{
 		tag, _ := cmd.Flags().GetString("tag")
 		object, _ := cmd.Flags().GetString("object")
 		create, _ := cmd.Flags().GetBool("create")
-		tagCreateHelper(repo, tag, object, create)
+		if tag != "" {
+			tagCreateHelper(repo, tag, object, create)
+		} else {
+			refs, err := models.ListRef(repo, "")
+			if err != nil {
+				log.Fatal(err)
+			}
+			if tags, ok := refs["tags"].(models.RefMap); ok {
+				plumbing.ShowRef(tags, true, "")
+			} else {
+				log.Fatal("Invalid type assertion for refs[\"tags\"]")
+			}
+		}
 	},
 }
 
