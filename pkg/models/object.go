@@ -8,6 +8,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -171,6 +173,50 @@ func ObjectHash(repo *Repository, objectype string, path string) (string, error)
 		return "", err
 	}
 	return ObjectWrite(object, repo)
+}
+
+func ObjectResolve(repo *Repository, name string) ([]string, error) {
+	if strings.TrimSpace(name) == "" {
+		return nil, &ShitException{Message: "No object name provided"}
+	}
+	candidates := []string{}
+	re := regexp.MustCompile(`^[0-9A-Fa-f]{4,40}$`)
+
+	if name == "HEAD" {
+		ref, err := ResolveRef(repo, "HEAD")
+		return []string{ref}, err
+	}
+
+	if re.MatchString(name) {
+		name = strings.ToLower(name)
+		prefix := name[:2]
+		path, _ := repo.RepoDir(false, "objects", prefix)
+		if path != "" {
+			rem := name[2:]
+			files, err := os.ReadDir(path)
+			if err == nil {
+				for _, f := range files {
+					if strings.HasPrefix(f.Name(), rem) {
+						candidates = append(candidates, prefix+f.Name())
+					}
+				}
+			}
+		}
+	}
+
+	// Try for references
+	asTag, _ := ResolveRef(repo, filepath.Join("refs", "tags", name))
+	if asTag != "" {
+		candidates = append(candidates, asTag)
+	}
+
+	asBranch, _ := ResolveRef(repo, filepath.Join("refs", "heads", name))
+	if asBranch != "" {
+		candidates = append(candidates, asBranch)
+	}
+
+	return candidates, nil
+
 }
 
 func readBinaryFile(path string) ([]byte, error) {
