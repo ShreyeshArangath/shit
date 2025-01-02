@@ -183,7 +183,7 @@ func ObjectResolve(repo *Repository, name string) ([]string, error) {
 	re := regexp.MustCompile(`^[0-9A-Fa-f]{4,40}$`)
 
 	if name == "HEAD" {
-		ref, err := ResolveRef(repo, "HEAD")
+		ref, err := ResolveRef(repo, filepath.Join(repo.GitDir, "HEAD"))
 		return []string{ref}, err
 	}
 
@@ -205,18 +205,17 @@ func ObjectResolve(repo *Repository, name string) ([]string, error) {
 	}
 
 	// Try for references
-	asTag, _ := ResolveRef(repo, filepath.Join("refs", "tags", name))
+	asTag, _ := ResolveRef(repo, filepath.Join(repo.GitDir, "refs", "tags", name))
 	if asTag != "" {
 		candidates = append(candidates, asTag)
 	}
 
-	asBranch, _ := ResolveRef(repo, filepath.Join("refs", "heads", name))
+	asBranch, _ := ResolveRef(repo, filepath.Join(repo.GitDir, "refs", "heads", name))
 	if asBranch != "" {
 		candidates = append(candidates, asBranch)
 	}
 
 	return candidates, nil
-
 }
 
 func readBinaryFile(path string) ([]byte, error) {

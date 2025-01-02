@@ -251,6 +251,76 @@ func TestObjectHashInvalidObjectType(t *testing.T) {
 	_, err = ObjectHash(repo, "invalidtype", tempFile)
 	assert.Error(t, err)
 }
+func TestObjectResolveEmptyName(t *testing.T) {
+	_, _, repo := setupObjectTest(t)
+	_, err := ObjectResolve(repo, "")
+	assert.Error(t, err)
+}
+
+func TestObjectResolveHEAD(t *testing.T) {
+	_, gitDir, repo := setupObjectTest(t)
+
+	// Create a fake HEAD reference
+	headPath := filepath.Join(gitDir, "HEAD")
+	err := os.WriteFile(headPath, []byte("ref: refs/heads/main\n"), 0644)
+	assert.NoError(t, err)
+
+	mainRefPath := filepath.Join(gitDir, "refs", "heads", "main")
+	err = os.MkdirAll(filepath.Dir(mainRefPath), 0755)
+	assert.NoError(t, err)
+	err = os.WriteFile(mainRefPath, []byte("1234567890abcdef1234567890abcdef12345678\n"), 0644)
+	assert.NoError(t, err)
+
+	refs, err := ObjectResolve(repo, "HEAD")
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"1234567890abcdef1234567890abcdef12345678"}, refs)
+}
+
+func TestObjectResolveSHA(t *testing.T) {
+	_, gitDir, repo := setupObjectTest(t)
+
+	// Create a fake object
+	sha := "1234567890abcdef1234567890abcdef12345678"
+	objectPath := filepath.Join(gitDir, "objects", sha[:2], sha[2:])
+	err := os.MkdirAll(filepath.Dir(objectPath), 0755)
+	assert.NoError(t, err)
+	err = os.WriteFile(objectPath, []byte("test data"), 0644)
+	assert.NoError(t, err)
+
+	refs, err := ObjectResolve(repo, sha[:4])
+	assert.NoError(t, err)
+	assert.Equal(t, []string{sha}, refs)
+}
+
+func TestObjectResolveTag(t *testing.T) {
+	_, gitDir, repo := setupObjectTest(t)
+
+	// Create a fake tag reference
+	tagPath := filepath.Join(gitDir, "refs", "tags", "v1.0")
+	err := os.MkdirAll(filepath.Dir(tagPath), 0755)
+	assert.NoError(t, err)
+	err = os.WriteFile(tagPath, []byte("1234567890abcdef1234567890abcdef12345678\n"), 0644)
+	assert.NoError(t, err)
+
+	refs, err := ObjectResolve(repo, "v1.0")
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"1234567890abcdef1234567890abcdef12345678"}, refs)
+}
+
+func TestObjectResolveBranch(t *testing.T) {
+	_, gitDir, repo := setupObjectTest(t)
+
+	// Create a fake branch reference
+	branchPath := filepath.Join(gitDir, "refs", "heads", "main")
+	err := os.MkdirAll(filepath.Dir(branchPath), 0755)
+	assert.NoError(t, err)
+	err = os.WriteFile(branchPath, []byte("1234567890abcdef1234567890abcdef12345678\n"), 0644)
+	assert.NoError(t, err)
+
+	refs, err := ObjectResolve(repo, "main")
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"1234567890abcdef1234567890abcdef12345678"}, refs)
+}
 
 // TODO: Update this test case to use the actual implementation of the blob object
 type FakeObject struct {
