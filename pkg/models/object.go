@@ -8,6 +8,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -151,7 +153,40 @@ func ObjectWrite(object Object, repo *Repository) (string, error) {
 }
 
 func ObjectFind(repo *Repository, name string, objecttype string, follow bool) (string, error) {
-	return name, nil
+	sha, _ := ObjectResolve(repo, name)
+	if len(sha) == 0 {
+		return "", &ShitException{Message: fmt.Sprintf("No such reference %s", name)}
+	}
+	if len(sha) > 1 {
+		return "", &ShitException{Message: fmt.Sprintf("Ambiguous reference %s: Candidates are %s", name, strings.Join(sha, ", "))}
+	}
+	shaVal := sha[0]
+	if objecttype == "" {
+		return shaVal, nil
+	}
+
+	for {
+		obj, err := ObjectRead(repo, shaVal)
+		if err != nil {
+			return "", err
+		}
+		if obj.GetType() == objecttype {
+			return shaVal, nil
+		}
+		if !follow {
+			return "", &ShitException{Message: fmt.Sprintf("Object %s is a %s, not a %s", shaVal, obj.GetType(), objecttype)}
+		}
+
+		// Follow tags
+		objType := obj.GetType()
+		if objType == "tag" {
+			shaVal = obj.(*ShitTag).TagMetadata.object
+		} else if objType == "commit" && objecttype == "tree" {
+			shaVal = obj.(*ShitCommit).CommitMetadata.tree
+		} else {
+			return "", &ShitException{Message: fmt.Sprintf("Don't know how to dereference %s object", objType)}
+		}
+	}
 }
 
 // ObjectHash computes the hash of an object in the repository.
@@ -171,6 +206,64 @@ func ObjectHash(repo *Repository, objectype string, path string) (string, error)
 		return "", err
 	}
 	return ObjectWrite(object, repo)
+}
+
+// ObjectResolve attempts to resolve a given object name within a repository.
+// It returns a list of candidate object names that match the provided name.
+//
+// Parameters:
+//   - repo: A pointer to the Repository where the object resides.
+//   - name: The name of the object to resolve.
+//
+// Returns:
+//   - A slice of strings containing the resolved object names.
+//   - An error if the object name is not provided or if there is an issue resolving the object.
+//
+// The function handles the following cases:
+//   - If the name is "HEAD", it resolves the HEAD reference.
+//   - If the name matches a hexadecimal pattern (4 to 40 characters), it searches for matching objects in the repository.
+//   - It also attempts to resolve the name as a tag or branch reference.
+func ObjectResolve(repo *Repository, name string) ([]string, error) {
+	if strings.TrimSpace(name) == "" {
+		return nil, &ShitException{Message: "No object name provided"}
+	}
+	candidates := []string{}
+	re := regexp.MustCompile(`^[0-9A-Fa-f]{4,40}$`)
+
+	if name == "HEAD" {
+		ref, err := ResolveRef(repo, filepath.Join(repo.GitDir, "HEAD"))
+		return []string{ref}, err
+	}
+
+	if re.MatchString(name) {
+		name = strings.ToLower(name)
+		prefix := name[:2]
+		path, _ := repo.RepoDir(false, "objects", prefix)
+		if path != "" {
+			rem := name[2:]
+			files, err := os.ReadDir(path)
+			if err == nil {
+				for _, f := range files {
+					if strings.HasPrefix(f.Name(), rem) {
+						candidates = append(candidates, prefix+f.Name())
+					}
+				}
+			}
+		}
+	}
+
+	// Try for references
+	asTag, _ := ResolveRef(repo, filepath.Join(repo.GitDir, "refs", "tags", name))
+	if asTag != "" {
+		candidates = append(candidates, asTag)
+	}
+
+	asBranch, _ := ResolveRef(repo, filepath.Join(repo.GitDir, "refs", "heads", name))
+	if asBranch != "" {
+		candidates = append(candidates, asBranch)
+	}
+
+	return candidates, nil
 }
 
 func readBinaryFile(path string) ([]byte, error) {

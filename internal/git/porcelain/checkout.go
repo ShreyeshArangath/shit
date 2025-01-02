@@ -20,7 +20,7 @@ var checkoutCmd = &cobra.Command{
 		commit, _ := cmd.Flags().GetString("commit")
 		path, _ := cmd.Flags().GetString("path")
 
-		name, err := models.ObjectFind(repo, commit, "commit", false)
+		name, err := models.ObjectFind(repo, commit, "commit", true)
 		if err != nil {
 			log.Fatal(err)
 		}

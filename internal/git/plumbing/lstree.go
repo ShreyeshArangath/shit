@@ -41,7 +41,7 @@ var lsTreeCmd = &cobra.Command{
 // For each item, it determines the object type (tree, blob, commit) and prints its details.
 // If the recursive flag is set and the item is a tree, the function calls itself recursively to list the contents of the subtree.
 func lsTreeHelper(repo *models.Repository, ref string, recursive bool, prefix string) error {
-	sha, err := models.ObjectFind(repo, ref, "tree", false)
+	sha, err := models.ObjectFind(repo, ref, "tree", true)
 	if err != nil {
 		return err
 	}
